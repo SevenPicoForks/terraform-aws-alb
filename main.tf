@@ -1,13 +1,13 @@
 resource "aws_security_group" "default" {
-  count       = module.this.enabled && var.security_group_enabled ? 1 : 0
+  count       = module.context.enabled && var.security_group_enabled ? 1 : 0
   description = "Controls access to the ALB (HTTP/HTTPS)"
   vpc_id      = var.vpc_id
-  name        = module.this.id
-  tags        = module.this.tags
+  name        = module.context.id
+  tags        = module.context.tags
 }
 
 resource "aws_security_group_rule" "egress" {
-  count             = module.this.enabled && var.security_group_enabled ? 1 : 0
+  count             = module.context.enabled && var.security_group_enabled ? 1 : 0
   type              = "egress"
   from_port         = "0"
   to_port           = "0"
@@ -17,7 +17,7 @@ resource "aws_security_group_rule" "egress" {
 }
 
 resource "aws_security_group_rule" "http_ingress" {
-  count             = module.this.enabled && var.security_group_enabled && var.http_enabled ? 1 : 0
+  count             = module.context.enabled && var.security_group_enabled && var.http_enabled ? 1 : 0
   type              = "ingress"
   from_port         = var.http_port
   to_port           = var.http_port
@@ -28,7 +28,7 @@ resource "aws_security_group_rule" "http_ingress" {
 }
 
 resource "aws_security_group_rule" "https_ingress" {
-  count             = module.this.enabled && var.security_group_enabled && var.https_enabled ? 1 : 0
+  count             = module.context.enabled && var.security_group_enabled && var.https_enabled ? 1 : 0
   type              = "ingress"
   from_port         = var.https_port
   to_port           = var.https_port
@@ -38,43 +38,20 @@ resource "aws_security_group_rule" "https_ingress" {
   security_group_id = join("", aws_security_group.default.*.id)
 }
 
-module "access_logs" {
-  source  = "cloudposse/lb-s3-bucket/aws"
-  version = "0.16.0"
-
-  enabled = module.this.enabled && var.access_logs_enabled && var.access_logs_s3_bucket_id == null
-
-  attributes = compact(concat(module.this.attributes, ["alb", "access", "logs"]))
-
-  force_destroy                 = var.alb_access_logs_s3_bucket_force_destroy
-  force_destroy_enabled         = var.alb_access_logs_s3_bucket_force_destroy_enabled
-  lifecycle_configuration_rules = var.lifecycle_configuration_rules
-
-  # TODO: deprecate these inputs in favor of `lifecycle_configuration_rules`
-  lifecycle_rule_enabled             = var.lifecycle_rule_enabled
-  enable_glacier_transition          = var.enable_glacier_transition
-  expiration_days                    = var.expiration_days
-  glacier_transition_days            = var.glacier_transition_days
-  noncurrent_version_expiration_days = var.noncurrent_version_expiration_days
-  noncurrent_version_transition_days = var.noncurrent_version_transition_days
-  standard_transition_days           = var.standard_transition_days
-
-  context = module.this.context
-}
 
 module "default_load_balancer_label" {
-  source          = "cloudposse/label/null"
-  version         = "0.25.0"
+  source  = "app.terraform.io/SevenPico/context/null"
+  version = "1.0.1"
   id_length_limit = var.load_balancer_name_max_length
-  context         = module.this.context
+  context         = module.context.context
 }
 
 resource "aws_lb" "default" {
   #bridgecrew:skip=BC_AWS_NETWORKING_41 - Skipping Ensure that ALB Drops HTTP Headers
   #bridgecrew:skip=BC_AWS_LOGGING_22 - Skipping Ensure ELBv2 has Access Logging Enabled
-  count              = module.this.enabled ? 1 : 0
+  count              = module.context.enabled ? 1 : 0
   name               = var.load_balancer_name == "" ? module.default_load_balancer_label.id : substr(var.load_balancer_name, 0, var.load_balancer_name_max_length)
-  tags               = module.this.tags
+  tags               = module.context.tags
   internal           = var.internal
   load_balancer_type = "application"
 
@@ -91,22 +68,22 @@ resource "aws_lb" "default" {
   drop_invalid_header_fields       = var.drop_invalid_header_fields
 
   access_logs {
-    bucket  = try(element(compact([var.access_logs_s3_bucket_id, module.access_logs.bucket_id]), 0), "")
+    bucket  = var.access_logs_s3_bucket_id
     prefix  = var.access_logs_prefix
     enabled = var.access_logs_enabled
   }
 }
 
 module "default_target_group_label" {
-  source          = "cloudposse/label/null"
-  version         = "0.25.0"
-  attributes      = concat(module.this.attributes, ["default"])
+  source  = "app.terraform.io/SevenPico/context/null"
+  version = "1.0.1"
+  attributes      = concat(module.context.attributes, ["default"])
   id_length_limit = var.target_group_name_max_length
-  context         = module.this.context
+  context         = module.context.context
 }
 
 resource "aws_lb_target_group" "default" {
-  count                = module.this.enabled && var.default_target_group_enabled ? 1 : 0
+  count                = module.context.enabled && var.default_target_group_enabled ? 1 : 0
   name                 = var.target_group_name == "" ? module.default_target_group_label.id : substr(var.target_group_name, 0, var.target_group_name_max_length)
   port                 = var.target_group_port
   protocol             = var.target_group_protocol
@@ -149,7 +126,7 @@ resource "aws_lb_target_group" "default" {
 resource "aws_lb_listener" "http_forward" {
   #bridgecrew:skip=BC_AWS_GENERAL_43 - Skipping Ensure that load balancer is using TLS 1.2.
   #bridgecrew:skip=BC_AWS_NETWORKING_29 - Skipping Ensure ALB Protocol is HTTPS
-  count             = module.this.enabled && var.http_enabled && var.http_redirect != true ? 1 : 0
+  count             = module.context.enabled && var.http_enabled && var.http_redirect != true ? 1 : 0
   load_balancer_arn = join("", aws_lb.default.*.arn)
   port              = var.http_port
   protocol          = "HTTP"
@@ -170,7 +147,7 @@ resource "aws_lb_listener" "http_forward" {
 }
 
 resource "aws_lb_listener" "http_redirect" {
-  count             = module.this.enabled && var.http_enabled && var.http_redirect == true ? 1 : 0
+  count             = module.context.enabled && var.http_enabled && var.http_redirect == true ? 1 : 0
   load_balancer_arn = join("", aws_lb.default.*.arn)
   port              = var.http_port
   protocol          = "HTTP"
@@ -189,7 +166,7 @@ resource "aws_lb_listener" "http_redirect" {
 
 resource "aws_lb_listener" "https" {
   #bridgecrew:skip=BC_AWS_GENERAL_43 - Skipping Ensure that load balancer is using TLS 1.2.
-  count             = module.this.enabled && var.https_enabled ? 1 : 0
+  count             = module.context.enabled && var.https_enabled ? 1 : 0
   load_balancer_arn = join("", aws_lb.default.*.arn)
 
   port            = var.https_port
@@ -213,7 +190,7 @@ resource "aws_lb_listener" "https" {
 }
 
 resource "aws_lb_listener_certificate" "https_sni" {
-  count           = module.this.enabled && var.https_enabled && var.additional_certs != [] ? length(var.additional_certs) : 0
+  count           = module.context.enabled && var.https_enabled && var.additional_certs != [] ? length(var.additional_certs) : 0
   listener_arn    = join("", aws_lb_listener.https.*.arn)
   certificate_arn = var.additional_certs[count.index]
 }
