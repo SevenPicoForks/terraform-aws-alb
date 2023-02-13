@@ -40,10 +40,10 @@ resource "aws_security_group_rule" "https_ingress" {
 
 
 module "default_load_balancer_label" {
-  source  = "app.terraform.io/SevenPico/context/null"
-  version = "1.0.1"
+  source  = "SevenPico/context/null"
+  version = "2.0.0"
   id_length_limit = var.load_balancer_name_max_length
-  context         = module.context.context
+  context         = module.context.self
 }
 
 resource "aws_lb" "default" {
@@ -75,11 +75,11 @@ resource "aws_lb" "default" {
 }
 
 module "default_target_group_label" {
-  source  = "app.terraform.io/SevenPico/context/null"
-  version = "1.0.1"
+  source  = "SevenPico/context/null"
+  version = "2.0.0"
   attributes      = concat(module.context.attributes, ["default"])
   id_length_limit = var.target_group_name_max_length
-  context         = module.context.context
+  context         = module.context.self
 }
 
 resource "aws_lb_target_group" "default" {

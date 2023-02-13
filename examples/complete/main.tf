@@ -6,7 +6,7 @@ module "vpc" {
   source     = "cloudposse/vpc/aws"
   version    = "0.28.1"
   cidr_block = var.vpc_cidr_block
-  context    = module.this.context
+  context    = module.context.self
 }
 
 module "subnets" {
@@ -18,7 +18,7 @@ module "subnets" {
   cidr_block           = module.vpc.vpc_cidr_block
   nat_gateway_enabled  = false
   nat_instance_enabled = false
-  context              = module.this.context
+  context              = module.context.self
 }
 
 module "alb" {
@@ -49,5 +49,5 @@ module "alb" {
   alb_access_logs_s3_bucket_force_destroy         = var.alb_access_logs_s3_bucket_force_destroy
   alb_access_logs_s3_bucket_force_destroy_enabled = var.alb_access_logs_s3_bucket_force_destroy_enabled
 
-  context = module.this.context
+  context = module.context.self
 }
