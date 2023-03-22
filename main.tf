@@ -69,7 +69,7 @@ resource "aws_lb" "default" {
 
   access_logs {
     bucket  = var.access_logs_s3_bucket_id
-    prefix  = var.access_logs_prefix
+    prefix  = var.access_logs_prefix != null ? var.access_logs_prefix : "${data.aws_caller_identity.current.account_id}/${module.context.id}"
     enabled = var.access_logs_enabled
   }
 }
