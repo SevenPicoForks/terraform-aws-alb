@@ -77,25 +77,25 @@ variable "https_ingress_cidr_blocks" {
 variable "https_ingress_prefix_list_ids" {
   type        = list(string)
   default     = []
-  description = "List of prefix list IDs for allowing access to HTTPS ingress security group"
+  description = "List of prefix list IDs for allowing access to HTTPS ingress security group."
 }
 
 variable "https_ssl_policy" {
   type        = string
-  description = "The name of the SSL Policy for the listener"
+  description = "The name of the SSL Policy for the listener."
   default     = "ELBSecurityPolicy-2015-05"
 }
 
 variable "access_logs_prefix" {
   type        = string
   default     = ""
-  description = "The S3 log bucket prefix"
+  description = "The S3 log bucket prefix. When this set to null the default of account_id/context_id will be used."
 }
 
 variable "access_logs_enabled" {
   type        = bool
   default     = true
-  description = "A boolean flag to enable/disable access_logs"
+  description = "A boolean flag to enable/disable access_logs."
 }
 
 variable "access_logs_s3_bucket_id" {
@@ -107,7 +107,7 @@ variable "access_logs_s3_bucket_id" {
 variable "cross_zone_load_balancing_enabled" {
   type        = bool
   default     = true
-  description = "A boolean flag to enable/disable cross zone load balancing"
+  description = "A boolean flag to enable/disable cross zone load balancing."
 }
 
 variable "http2_enabled" {
