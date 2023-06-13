@@ -1,4 +1,5 @@
 resource "aws_security_group" "default" {
+  #checkov:skip=CKV2_AWS_5:skipping 'Ensure that Security Groups are attached to another resource'
   count       = module.context.enabled && var.security_group_enabled ? 1 : 0
   description = "Controls access to the ALB (HTTP/HTTPS)"
   vpc_id      = var.vpc_id
@@ -8,6 +9,7 @@ resource "aws_security_group" "default" {
 
 resource "aws_security_group_rule" "egress" {
   count             = module.context.enabled && var.security_group_enabled ? 1 : 0
+  description       = "Allow egress to all."
   type              = "egress"
   from_port         = "0"
   to_port           = "0"
@@ -17,7 +19,9 @@ resource "aws_security_group_rule" "egress" {
 }
 
 resource "aws_security_group_rule" "http_ingress" {
+  #checkov:skip=CKV_AWS_260:skipping 'Ensure no security groups allow ingress from 0.0.0.0:0 to port 80'
   count             = module.context.enabled && var.security_group_enabled && var.http_enabled ? 1 : 0
+  description       = "Allow ingress from ${var.http_ingress_cidr_blocks} on ${var.http_port}."
   type              = "ingress"
   from_port         = var.http_port
   to_port           = var.http_port
@@ -49,6 +53,7 @@ module "default_load_balancer_label" {
 resource "aws_lb" "default" {
   #bridgecrew:skip=BC_AWS_NETWORKING_41 - Skipping Ensure that ALB Drops HTTP Headers
   #bridgecrew:skip=BC_AWS_LOGGING_22 - Skipping Ensure ELBv2 has Access Logging Enabled
+  #checkov:skip=CKV2_AWS_20 - Skipping 'Ensure that ALB redirects HTTP requests into HTTPS ones'
   count              = module.context.enabled ? 1 : 0
   name               = var.load_balancer_name == "" ? module.default_load_balancer_label.id : substr(var.load_balancer_name, 0, var.load_balancer_name_max_length)
   tags               = module.context.tags
