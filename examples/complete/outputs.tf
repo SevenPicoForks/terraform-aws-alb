@@ -58,7 +58,7 @@ output "listener_arns" {
   value       = module.alb.listener_arns
 }
 
-output "access_logs_bucket_id" {
-  description = "The S3 bucket ID for access logs"
-  value       = module.alb.access_logs_bucket_id
-}
+#output "access_logs_bucket_id" {
+#  description = "The S3 bucket ID for access logs"
+#  value       = module.alb.access_logs_bucket_id
+#}

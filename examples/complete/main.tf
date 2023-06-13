@@ -3,19 +3,19 @@ provider "aws" {
 }
 
 module "vpc" {
-  source     = "cloudposse/vpc/aws"
-  version    = "0.28.1"
-  cidr_block = var.vpc_cidr_block
-  context    = module.context.self
+  source                  = "cloudposse/vpc/aws"
+  version                 = "2.1.0"
+  ipv4_primary_cidr_block = var.vpc_cidr_block
+  context                 = module.context.self
 }
 
 module "subnets" {
   source               = "cloudposse/dynamic-subnets/aws"
-  version              = "0.39.8"
+  version              = "2.3.0"
   availability_zones   = var.availability_zones
   vpc_id               = module.vpc.vpc_id
-  igw_id               = module.vpc.igw_id
-  cidr_block           = module.vpc.vpc_cidr_block
+  igw_id               = [module.vpc.igw_id]
+  ipv4_cidr_block      = [module.vpc.vpc_cidr_block]
   nat_gateway_enabled  = false
   nat_instance_enabled = false
   context              = module.context.self
@@ -46,8 +46,8 @@ module "alb" {
   target_group_target_type          = var.target_group_target_type
   stickiness                        = var.stickiness
 
-  alb_access_logs_s3_bucket_force_destroy         = var.alb_access_logs_s3_bucket_force_destroy
-  alb_access_logs_s3_bucket_force_destroy_enabled = var.alb_access_logs_s3_bucket_force_destroy_enabled
+  #alb_access_logs_s3_bucket_force_destroy         = var.alb_access_logs_s3_bucket_force_destroy
+  #alb_access_logs_s3_bucket_force_destroy_enabled = var.alb_access_logs_s3_bucket_force_destroy_enabled
 
   context = module.context.self
 }

@@ -40,8 +40,8 @@ resource "aws_security_group_rule" "https_ingress" {
 
 
 module "default_load_balancer_label" {
-  source  = "SevenPico/context/null"
-  version = "2.0.0"
+  source          = "SevenPico/context/null"
+  version         = "2.0.0"
   id_length_limit = var.load_balancer_name_max_length
   context         = module.context.self
 }
@@ -75,8 +75,8 @@ resource "aws_lb" "default" {
 }
 
 module "default_target_group_label" {
-  source  = "SevenPico/context/null"
-  version = "2.0.0"
+  source          = "SevenPico/context/null"
+  version         = "2.0.0"
   attributes      = concat(module.context.attributes, ["default"])
   id_length_limit = var.target_group_name_max_length
   context         = module.context.self
